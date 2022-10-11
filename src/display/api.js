@@ -2690,7 +2690,8 @@ class WorkerTransport {
                 // rather than waiting for a `PDFDocumentProxy.cleanup` call.
                 // Since `font.data` could be very large, e.g. in some cases
                 // multiple megabytes, this will help reduce memory usage.
-                font.data = null;
+                // EDIT: Keep the font data around to ease the extracting process.
+                // font.data = null;
               }
               this.commonObjs.resolve(id, font);
             });
