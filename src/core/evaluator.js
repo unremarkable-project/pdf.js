@@ -96,6 +96,40 @@ const PatternType = {
   SHADING: 2,
 };
 
+const canBeCloned = val => {
+  if (Object(val) !== val) {
+    // Primitive value
+    return true;
+  }
+  switch (
+    {}.toString.call(val).slice(8, -1) // Class
+  ) {
+    case "Boolean":
+    case "Number":
+    case "String":
+    case "Date":
+    case "RegExp":
+    case "Blob":
+    case "FileList":
+    case "ImageData":
+    case "ImageBitmap":
+    case "ArrayBuffer":
+      return true;
+    case "Array":
+    case "Object":
+      return Object.keys(val).every(prop => canBeCloned(val[prop]));
+    case "Map":
+      return (
+        [...val.keys()].every(canBeCloned) &&
+        [...val.values()].every(canBeCloned)
+      );
+    case "Set":
+      return [...val.keys()].every(canBeCloned);
+    default:
+      return false;
+  }
+};
+
 // Optionally avoid sending individual, or very few, text chunks to reduce
 // `postMessage` overhead with ReadableStream (see issue 13962).
 //
@@ -522,14 +556,14 @@ class PartialEvaluator {
         smask.backdrop = colorSpace.getRgb(smask.backdrop, 0);
       }
 
-      operatorList.addOp(OPS.beginGroup, [groupOptions]);
+      // operatorList.addOp(OPS.beginGroup, [groupOptions]);
     }
 
     // If it's a group, a new canvas will be created that is the size of the
     // bounding box and translated to the correct position so we don't need to
     // apply the bounding box to it.
     const args = group ? [matrix, null] : [matrix, bbox];
-    operatorList.addOp(OPS.paintFormXObjectBegin, args);
+    // operatorList.addOp(OPS.paintFormXObjectBegin, args);
 
     return this.getOperatorList({
       stream: xobj,
@@ -538,11 +572,11 @@ class PartialEvaluator {
       operatorList,
       initialState,
     }).then(function () {
-      operatorList.addOp(OPS.paintFormXObjectEnd, []);
+      // operatorList.addOp(OPS.paintFormXObjectEnd, []);
 
-      if (group) {
-        operatorList.addOp(OPS.endGroup, [groupOptions]);
-      }
+      // if (group) {
+      //   operatorList.addOp(OPS.endGroup, [groupOptions]);
+      // }
 
       if (optionalContent !== undefined) {
         operatorList.addOp(OPS.endMarkedContent, []);
@@ -1871,6 +1905,7 @@ class PartialEvaluator {
             parsingText = false;
             break;
           case OPS.endInlineImage:
+            break;
             var cacheKey = args[0].cacheKey;
             if (cacheKey) {
               const localImage = localImageCache.getByName(cacheKey);
@@ -1899,6 +1934,7 @@ class PartialEvaluator {
             );
             return;
           case OPS.showText:
+            break;
             if (!stateManager.state.font) {
               self.ensureStateFont(stateManager.state);
               continue;
@@ -1906,6 +1942,7 @@ class PartialEvaluator {
             args[0] = self.handleText(args[0], stateManager.state);
             break;
           case OPS.showSpacedText:
+            break;
             if (!stateManager.state.font) {
               self.ensureStateFont(stateManager.state);
               continue;
@@ -1973,6 +2010,7 @@ class PartialEvaluator {
             return;
           }
           case OPS.setStrokeColorSpace: {
+            break;
             const cachedColorSpace = ColorSpace.getCached(
               args[0],
               xref,
@@ -1999,44 +2037,53 @@ class PartialEvaluator {
             return;
           }
           case OPS.setFillColor:
+            break;
             cs = stateManager.state.fillColorSpace;
             args = cs.getRgb(args, 0);
             fn = OPS.setFillRGBColor;
             break;
           case OPS.setStrokeColor:
+            break;
             cs = stateManager.state.strokeColorSpace;
             args = cs.getRgb(args, 0);
             fn = OPS.setStrokeRGBColor;
             break;
           case OPS.setFillGray:
+            break;
             stateManager.state.fillColorSpace = ColorSpace.singletons.gray;
             args = ColorSpace.singletons.gray.getRgb(args, 0);
             fn = OPS.setFillRGBColor;
             break;
           case OPS.setStrokeGray:
+            break;
             stateManager.state.strokeColorSpace = ColorSpace.singletons.gray;
             args = ColorSpace.singletons.gray.getRgb(args, 0);
             fn = OPS.setStrokeRGBColor;
             break;
           case OPS.setFillCMYKColor:
+            break;
             stateManager.state.fillColorSpace = ColorSpace.singletons.cmyk;
             args = ColorSpace.singletons.cmyk.getRgb(args, 0);
             fn = OPS.setFillRGBColor;
             break;
           case OPS.setStrokeCMYKColor:
+            break;
             stateManager.state.strokeColorSpace = ColorSpace.singletons.cmyk;
             args = ColorSpace.singletons.cmyk.getRgb(args, 0);
             fn = OPS.setStrokeRGBColor;
             break;
           case OPS.setFillRGBColor:
+            break;
             stateManager.state.fillColorSpace = ColorSpace.singletons.rgb;
             args = ColorSpace.singletons.rgb.getRgb(args, 0);
             break;
           case OPS.setStrokeRGBColor:
+            break;
             stateManager.state.strokeColorSpace = ColorSpace.singletons.rgb;
             args = ColorSpace.singletons.rgb.getRgb(args, 0);
             break;
           case OPS.setFillColorN:
+            break;
             cs = stateManager.state.fillColorSpace;
             if (cs.name === "Pattern") {
               next(
@@ -2059,6 +2106,7 @@ class PartialEvaluator {
             fn = OPS.setFillRGBColor;
             break;
           case OPS.setStrokeColorN:
+            break;
             cs = stateManager.state.strokeColorSpace;
             if (cs.name === "Pattern") {
               next(
@@ -2082,6 +2130,9 @@ class PartialEvaluator {
             break;
 
           case OPS.shadingFill:
+            // TODO: Shading
+            continue;
+            break;
             var shadingRes = resources.get("Shading");
             if (!shadingRes) {
               throw new FormatError("No shading resource found");
@@ -2101,6 +2152,7 @@ class PartialEvaluator {
             fn = OPS.shadingFill;
             break;
           case OPS.setGState:
+            break;
             isValidName = args[0] instanceof Name;
             name = args[0].name;
 
@@ -2170,6 +2222,7 @@ class PartialEvaluator {
           case OPS.curveTo3:
           case OPS.closePath:
           case OPS.rectangle:
+            break;
             self.buildPath(operatorList, fn, args, parsingText);
             continue;
           case OPS.markPoint:
@@ -2241,7 +2294,14 @@ class PartialEvaluator {
               }
             }
         }
-        operatorList.addOp(fn, args);
+
+        if (canBeCloned(args)) {
+          operatorList.addOp(fn, args);
+        } else {
+          throw Error(
+            `arguments for operation, ${fn}, cannot be cloned ${args}`
+          );
+        }
       }
       if (stop) {
         next(deferred);

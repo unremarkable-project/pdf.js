@@ -919,22 +919,22 @@ class Annotation {
       opList.addOp(OPS.beginMarkedContentProps, ["OC", optionalContent]);
     }
 
-    opList.addOp(OPS.beginAnnotation, [
-      data.id,
-      data.rect,
-      transform,
-      matrix,
-      isUsingOwnCanvas,
-    ]);
+    // opList.addOp(OPS.beginAnnotation, [
+    //   data.id,
+    //   data.rect,
+    //   transform,
+    //   matrix,
+    //   isUsingOwnCanvas,
+    // ]);
 
-    await evaluator.getOperatorList({
-      stream: appearance,
-      task,
-      resources,
-      operatorList: opList,
-      fallbackFontDict: this._fallbackFontDict,
-    });
-    opList.addOp(OPS.endAnnotation, []);
+    // await evaluator.getOperatorList({
+    //   stream: appearance,
+    //   task,
+    //   resources,
+    //   operatorList: opList,
+    //   fallbackFontDict: this._fallbackFontDict,
+    // });
+    // opList.addOp(OPS.endAnnotation, []);
 
     if (optionalContent !== undefined) {
       opList.addOp(OPS.endMarkedContent, []);
