@@ -137,11 +137,11 @@ function safeSpawnSync(command, parameters, options) {
   if (result.status !== 0) {
     console.log(
       'Error: command "' +
-        command +
-        '" with parameters "' +
-        parameters +
-        '" exited with code ' +
-        result.status
+      command +
+      '" with parameters "' +
+      parameters +
+      '" exited with code ' +
+      result.status
     );
     process.exit(result.status);
   }
@@ -317,7 +317,7 @@ function checkChromePreferencesFile(chromePrefsPath, webPrefs) {
       ret = false;
       console.log(
         `Warning: not the same values (for "${value}"): ` +
-          `${chromePrefs.properties[value].default} !== ${webPrefs[value]}`
+        `${chromePrefs.properties[value].default} !== ${webPrefs[value]}`
       );
     }
   }
@@ -2313,7 +2313,7 @@ gulp.task(
       opts.cwd = installPath;
       distPath = path.relative(installPath, distPath);
     }
-    safeSpawnSync("npm", ["install", distPath], opts);
+    safeSpawnSync("npm", ["install", "-f", distPath], opts);
     done();
   })
 );
@@ -2426,8 +2426,8 @@ gulp.task(
             .on("end", function () {
               console.log(
                 "Result diff can be found at " +
-                  BUILD_DIR +
-                  MOZCENTRAL_DIFF_FILE
+                BUILD_DIR +
+                MOZCENTRAL_DIFF_FILE
               );
               done();
             });
