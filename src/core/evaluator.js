@@ -1343,6 +1343,9 @@ class PartialEvaluator {
         if (translatedFont.fontType !== undefined) {
           xref.stats.addFontType(translatedFont.fontType);
         }
+        // Edit: extract the font ref ({ objId, gen }) to use
+        // as the cache key across platforms.
+        translatedFont.hack_extractedFontRef = fontRef;
 
         fontCapability.resolve(
           new TranslatedFont({

@@ -101,6 +101,7 @@ const EXPORT_DATA_PROPERTIES = [
   "subtype",
   "type",
   "vertical",
+  "hack_extractedFontRef",
 ];
 
 const EXPORT_DATA_EXTRA_PROPERTIES = [
