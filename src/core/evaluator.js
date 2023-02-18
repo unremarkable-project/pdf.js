@@ -1249,7 +1249,16 @@ class PartialEvaluator {
     }
 
     if (this.fontCache.has(fontRef)) {
-      return this.fontCache.get(fontRef);
+      // Edit: pdf.js might de-duplicate two fonts according to their caching strategy
+      // in this case, the font will have the same loadedName but can actually point
+      // to different point font refs (in those cases they typically have the same
+      // font descriptor). 
+      // In this case, the font in the cache will be different then the desired
+      // font ref. Remap the font ref accordingly.
+      return this.fontCache.get(fontRef).then((cachedFont) => {
+        cachedFont.font.hack_extractedFontRef = fontRef;
+        return cachedFont;
+      });
     }
 
     font = xref.fetchIfRef(fontRef);
@@ -1281,29 +1290,32 @@ class PartialEvaluator {
       fontID = `f${fontRef.toString()}`;
     }
 
-    if (hash && descriptor instanceof Dict) {
-      if (!descriptor.fontAliases) {
-        descriptor.fontAliases = Object.create(null);
-      }
-      const fontAliases = descriptor.fontAliases;
+    // Edit: disable font alias optimization since we want
+    // fonts with different fontRefs (aka with an alias) to
+    // not use any caching strategy.
+    // if (hash && descriptor instanceof Dict) {
+    //   if (!descriptor.fontAliases) {
+    //     descriptor.fontAliases = Object.create(null);
+    //   }
+    //   const fontAliases = descriptor.fontAliases;
 
-      if (fontAliases[hash]) {
-        const aliasFontRef = fontAliases[hash].aliasRef;
-        if (fontRefIsRef && aliasFontRef && this.fontCache.has(aliasFontRef)) {
-          this.fontCache.putAlias(fontRef, aliasFontRef);
-          return this.fontCache.get(fontRef);
-        }
-      } else {
-        fontAliases[hash] = {
-          fontID: this.idFactory.createFontId(),
-        };
-      }
+    //   if (fontAliases[hash]) {
+    //     const aliasFontRef = fontAliases[hash].aliasRef;
+    //     if (fontRefIsRef && aliasFontRef && this.fontCache.has(aliasFontRef)) {
+    //       this.fontCache.putAlias(fontRef, aliasFontRef);
+    //       return this.fontCache.get(fontRef);
+    //     }
+    //   } else {
+    //     fontAliases[hash] = {
+    //       fontID: this.idFactory.createFontId(),
+    //     };
+    //   }
 
-      if (fontRefIsRef) {
-        fontAliases[hash].aliasRef = fontRef;
-      }
-      fontID = fontAliases[hash].fontID;
-    }
+    //   if (fontRefIsRef) {
+    //     fontAliases[hash].aliasRef = fontRef;
+    //   }
+    //   fontID = fontAliases[hash].fontID;
+    // }
 
     // Workaround for bad PDF generators that reference fonts incorrectly,
     // where `fontRef` is a `Dict` rather than a `Ref` (fixes bug946506.pdf).
@@ -1336,7 +1348,10 @@ class PartialEvaluator {
 
     // Keep track of each font we translated so the caller can
     // load them asynchronously before calling display on a page.
-    font.loadedName = `${this.idFactory.getDocId()}_${fontID}`;
+    // Edit: include fontRef has parameters for a font loadedName's
+    // this prevents fonts which pdf.js deems as equal but point to
+    // different resources from sharing a loaded name. 
+    font.loadedName = `${this.idFactory.getDocId()}_${fontID}_${fontRef.num}_${fontRef.gen}`;
 
     this.translateFont(preEvaluatedFont)
       .then(translatedFont => {
